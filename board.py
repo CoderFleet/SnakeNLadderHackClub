@@ -58,6 +58,7 @@ class GameBoard(tk.Frame):
             new_position = 100 - (new_position - 100)  # Bounce back from 100
         self.player_positions[player_index] = new_position
         self.check_snake_or_ladder(player_index, new_position)
+        self.update_player_positions()
 
     def check_snake_or_ladder(self, player_index, position):
         if position in SNAKE_POSITIONS:
@@ -83,30 +84,28 @@ class GameBoard(tk.Frame):
         self.game_over = value
 
     def display_turn(self, player_index):
-        # Example implementation, adjust as needed
         print(f"Player {player_index + 1}'s turn")
 
     def display_dice_roll(self, dice_roll):
-        # Example implementation, adjust as needed
         print(f"Dice rolled: {dice_roll}")
 
     def display_winner(self, player_index):
-        # Example implementation, adjust as needed
         print(f"Player {player_index + 1} wins!")
 
     def update_player_positions(self):
-        # Update GUI with current player positions
         for i in range(self.num_players):
             position = self.player_positions[i]
-            # Example: Update corresponding cell widget text to show player number or token
-            # Example:
-            # self.cell_widgets[position].config(text=f"Player {i + 1}")
+            self.cell_widgets[position].config(text=f"Player {i + 1}")
+
+    def restart_game(self):
+        self.destroy()
+        self.__init__(self.parent_window, self.num_players)
 
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Snakes and Ladders")
 
     board = GameBoard(root, 2)
-    board.pack()
+    game = Game(board, 2)
 
     root.mainloop()

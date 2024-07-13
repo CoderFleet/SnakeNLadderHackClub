@@ -1,47 +1,56 @@
-from board import GameBoard
+# game.py
+
+import tkinter as tk
+import random
+from board import GameBoard, SNAKE_POSITIONS, LADDER_POSITIONS, PLAYER_COLORS
 
 class Game:
     def __init__(self, board, num_players):
         self.board = board
         self.num_players = num_players
-        self.current_player = 0
-        self.players_won = [False] * num_players
-        self.board.bind("<Button-1>", self.handle_dice_click)
-        self.setup_game()
-
-    def setup_game(self):
+        self.players = [Player(f"Player {i+1}", PLAYER_COLORS[i]) for i in range(num_players)]
+        self.current_player_index = 0
+        self.active_player = self.players[self.current_player_index]
+        self.board.bind("<Button-1>", self.on_board_click)
         self.board.update_player_positions()
-        self.board.display_turn(self.current_player)
 
-    def handle_dice_click(self, event):
-        if not self.board.is_game_over():
-            if self.board.get_current_player() == self.current_player:
-                dice_roll = self.board.roll_dice()
-                self.board.display_dice_roll(dice_roll)
-                self.move_player(dice_roll)
+    def roll_dice(self):
+        return random.randint(1, 6)
 
     def move_player(self, steps):
-        current_player_index = self.board.get_current_player()
-        self.board.move_player(current_player_index, steps)
+        self.board.move_player(self.current_player_index, steps)
+
+        if self.board.player_positions[self.current_player_index] == 100:
+            self.board.set_game_over()
+            self.board.display_winner(self.current_player_index)
+        else:
+            self.board.next_turn()
+            self.board.display_turn(self.board.get_current_player())
+
+    def on_board_click(self, event):
+        if self.board.is_game_over():
+            return
+        dice_roll = self.roll_dice()
+        self.board.display_dice_roll(dice_roll)
+        self.move_player(dice_roll)
+
+    def restart_game(self):
+        self.board.destroy()
+        self.board = GameBoard(self.board.parent_window, self.num_players)
+        self.board.pack()
+        self.board.bind("<Button-1>", self.on_board_click)
         self.board.update_player_positions()
 
-        current_position = self.board.player_positions[current_player_index]
-        if current_position == 100:
-            self.players_won[current_player_index] = True
-            self.check_game_over()
-
-        if not self.board.is_game_over():
-            self.board.next_turn()
-            self.current_player = (self.current_player + 1) % self.num_players
-            self.board.display_turn(self.current_player)
-
-    def check_game_over(self):
-        if all(self.players_won):
-            self.board.set_game_over()
-            winner_index = self.players_won.index(True)
-            self.board.display_winner(winner_index)
+class Player:
+    def __init__(self, name, color):
+        self.name = name
+        self.color = color
 
 if __name__ == "__main__":
-    board = GameBoard(None, 2)  # Initialize GameBoard with None for parent (to be set in main.py)
+    root = tk.Tk()
+    root.title("Snakes and Ladders")
+
+    board = GameBoard(root, 2)
     game = Game(board, 2)
-    game.setup_game()
+
+    root.mainloop()
