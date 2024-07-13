@@ -1,4 +1,5 @@
 import tkinter as tk
+import random
 
 BOARD_SIZE = 10
 CELL_SIZE = 60
@@ -12,6 +13,8 @@ class GameBoard(tk.Frame):
         self.parent_window = parent
         self.num_players = num_players
         self.player_positions = [1] * num_players
+        self.current_player = 0
+        self.game_over = False
         self.create_board()
 
     def create_board(self):
@@ -47,6 +50,37 @@ class GameBoard(tk.Frame):
             self.cell_widgets[start].config(bg='red', text=f'{start} -> {end}')
         for start, end in LADDER_POSITIONS.items():
             self.cell_widgets[start].config(bg='green', text=f'{start} -> {end}')
+
+    def move_player(self, player_index, steps):
+        current_position = self.player_positions[player_index]
+        new_position = current_position + steps
+        if new_position > 100:
+            new_position = 100 - (new_position - 100)  # Bounce back from 100
+        self.player_positions[player_index] = new_position
+        self.check_snake_or_ladder(player_index, new_position)
+
+    def check_snake_or_ladder(self, player_index, position):
+        if position in SNAKE_POSITIONS:
+            new_position = SNAKE_POSITIONS[position]
+            self.player_positions[player_index] = new_position
+        elif position in LADDER_POSITIONS:
+            new_position = LADDER_POSITIONS[position]
+            self.player_positions[player_index] = new_position
+
+    def roll_dice(self):
+        return random.randint(1, 6)
+
+    def next_turn(self):
+        self.current_player = (self.current_player + 1) % self.num_players
+
+    def get_current_player(self):
+        return self.current_player
+
+    def is_game_over(self):
+        return self.game_over
+
+    def set_game_over(self, value=True):
+        self.game_over = value
 
 if __name__ == "__main__":
     root = tk.Tk()
