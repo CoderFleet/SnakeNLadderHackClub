@@ -5,10 +5,11 @@ class Game:
         self.board = board
         self.num_players = num_players
         self.current_player = 0
-        self.board.bind("<Button-1>", self.handle_dice_click)
         self.players_won = [False] * num_players
+        self.board.bind("<Button-1>", self.handle_dice_click)
+        self.setup_game()
 
-    def start(self):
+    def setup_game(self):
         self.board.update_player_positions()
         self.board.display_turn(self.current_player)
 
@@ -37,10 +38,10 @@ class Game:
     def check_game_over(self):
         if all(self.players_won):
             self.board.set_game_over()
-            self.board.display_winner(self.current_player)
+            winner_index = self.players_won.index(True)
+            self.board.display_winner(winner_index)
 
 if __name__ == "__main__":
-    board = GameBoard(None, 2)
+    board = GameBoard(None, 2)  # Initialize GameBoard with None for parent (to be set in main.py)
     game = Game(board, 2)
-    game.start()
-    board.mainloop()
+    game.setup_game()

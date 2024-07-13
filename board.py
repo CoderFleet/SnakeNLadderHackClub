@@ -82,6 +82,26 @@ class GameBoard(tk.Frame):
     def set_game_over(self, value=True):
         self.game_over = value
 
+    def display_turn(self, player_index):
+        # Example implementation, adjust as needed
+        print(f"Player {player_index + 1}'s turn")
+
+    def display_dice_roll(self, dice_roll):
+        # Example implementation, adjust as needed
+        print(f"Dice rolled: {dice_roll}")
+
+    def display_winner(self, player_index):
+        # Example implementation, adjust as needed
+        print(f"Player {player_index + 1} wins!")
+
+    def update_player_positions(self):
+        # Update GUI with current player positions
+        for i in range(self.num_players):
+            position = self.player_positions[i]
+            # Example: Update corresponding cell widget text to show player number or token
+            # Example:
+            # self.cell_widgets[position].config(text=f"Player {i + 1}")
+
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Snakes and Ladders")

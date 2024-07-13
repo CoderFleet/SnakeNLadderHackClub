@@ -1,14 +1,34 @@
 import tkinter as tk
+from board import GameBoard
+from game import Game
 from menu import PlayerMenu
 
-def main():
-    root = tk.Tk()
-    root.title("Snakes and Ladders")
+class SnakesAndLaddersApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Snakes and Ladders")
 
-    menu = PlayerMenu(root)
-    menu.pack()
+        self.setup_menu()
 
-    root.mainloop()
+    def setup_menu(self):
+        self.menu_bar = tk.Menu(self)
+
+        # Initialize the player menu
+        self.player_menu = PlayerMenu(self)
+        self.menu_bar.add_cascade(label="Menu", menu=self.player_menu)
+
+        self.config(menu=self.menu_bar)
+
+    def start_game(self, num_players):
+        if hasattr(self, 'board'):
+            self.board.destroy()
+
+        self.board = GameBoard(self, num_players)
+        self.board.pack()
+
+        self.game = Game(self.board, num_players)
+        self.game.start()
 
 if __name__ == "__main__":
-    main()
+    app = SnakesAndLaddersApp()
+    app.mainloop()
