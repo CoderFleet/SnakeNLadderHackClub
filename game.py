@@ -1,5 +1,3 @@
-# game.py
-
 import tkinter as tk
 import random
 from board import GameBoard, SNAKE_POSITIONS, LADDER_POSITIONS, PLAYER_COLORS
@@ -11,7 +9,7 @@ class Game:
         self.players = [Player(f"Player {i+1}", PLAYER_COLORS[i]) for i in range(num_players)]
         self.current_player_index = 0
         self.active_player = self.players[self.current_player_index]
-        self.board.bind("<Button-1>", self.on_board_click)
+        self.board.bind("<Return>", self.on_enter_press)  # Bind Enter key press event
         self.board.update_player_positions()
 
     def roll_dice(self):
@@ -27,7 +25,7 @@ class Game:
             self.board.next_turn()
             self.board.display_turn(self.board.get_current_player())
 
-    def on_board_click(self, event):
+    def on_enter_press(self, event):
         if self.board.is_game_over():
             return
         dice_roll = self.roll_dice()
@@ -38,7 +36,7 @@ class Game:
         self.board.destroy()
         self.board = GameBoard(self.board.parent_window, self.num_players)
         self.board.pack()
-        self.board.bind("<Button-1>", self.on_board_click)
+        self.board.bind("<Return>", self.on_enter_press)
         self.board.update_player_positions()
 
 class Player:
