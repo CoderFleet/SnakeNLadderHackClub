@@ -1,6 +1,9 @@
 import random
 import tkinter as tk
 from tkinter import simpledialog, messagebox
+import pickle
+import os
+
 
 class SnakeNLadder:
     def __init__(self, master):
@@ -10,6 +13,7 @@ class SnakeNLadder:
         self.canvas.pack()
         self.players_names = ["Player 1", "Player 2", "Player 3", "Player 4"]
         self.current_player = 0
+        self.roll_in_progress = False  # Added roll_in_progress attribute
         self.snakes = {}
         self.ladders = {}
         self.snakes = self.generate_snakes()
@@ -17,13 +21,11 @@ class SnakeNLadder:
         self.draw_board()
         self.create_players()
         self.create_dice()
-        self.dice_animation_speed = 100
-        self.roll_in_progress = False
-        self.dice_roll = 0
+        self.create_dice_images()
         self.create_reset_button()
+        self.create_save_load_buttons()
         self.create_player_indicators()
         self.create_snake_ladder_display()
-        self.create_dice_images()
 
     def generate_snakes(self):
         snakes = {}
@@ -54,10 +56,10 @@ class SnakeNLadder:
                 y2 = y1 + size
                 color = colors[(row + col) % 2]
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color)
-        
+
         for i in range(1, 101):
-            col = (i-1) % 10 if (i-1) // 10 % 2 == 0 else 9 - (i-1) % 10
-            row = 9 - (i-1) // 10
+            col = (i - 1) % 10 if (i - 1) // 10 % 2 == 0 else 9 - (i - 1) % 10
+            row = 9 - (i - 1) // 10
             x = col * size + size // 2
             y = row * size + size // 2
             self.canvas.create_text(x, y, text=str(i))
@@ -75,10 +77,10 @@ class SnakeNLadder:
 
     def draw_arrow(self, start, end, color):
         size = 60
-        start_col = (start-1) % 10 if (start-1) // 10 % 2 == 0 else 9 - (start-1) % 10
-        start_row = 9 - (start-1) // 10
-        end_col = (end-1) % 10 if (end-1) // 10 % 2 == 0 else 9 - (end-1) % 10
-        end_row = 9 - (end-1) // 10
+        start_col = (start - 1) % 10 if (start - 1) // 10 % 2 == 0 else 9 - (start - 1) % 10
+        start_row = 9 - (start - 1) // 10
+        end_col = (end - 1) % 10 if (end - 1) // 10 % 2 == 0 else 9 - (end - 1) % 10
+        end_row = 9 - (end - 1) // 10
 
         start_x = start_col * size + size // 2
         start_y = start_row * size + size // 2
@@ -101,12 +103,19 @@ class SnakeNLadder:
         self.dice_label.pack(pady=20)
         self.roll_button = tk.Button(self.master, text="Roll", command=self.roll_dice)
         self.roll_button.pack(pady=10)
-        self.turn_label = tk.Label(self.master, text=f"{self.players_names[self.current_player]}'s turn", font=("Arial", 16))
+        self.turn_label = tk.Label(self.master, text=f"{self.players_names[self.current_player]}'s turn",
+                                   font=("Arial", 16))
         self.turn_label.pack(pady=10)
 
     def create_reset_button(self):
         self.reset_button = tk.Button(self.master, text="Reset", command=self.reset_game)
         self.reset_button.pack(pady=10)
+
+    def create_save_load_buttons(self):
+        self.save_button = tk.Button(self.master, text="Save Game", command=self.save_game)
+        self.save_button.pack(pady=10)
+        self.load_button = tk.Button(self.master, text="Load Game", command=self.load_game)
+        self.load_button.pack(pady=10)
 
     def create_player_indicators(self):
         self.player_indicators = [
@@ -121,7 +130,7 @@ class SnakeNLadder:
     def create_snake_ladder_display(self):
         self.snake_ladder_frame = tk.Frame(self.master)
         self.snake_ladder_frame.pack(pady=20)
-        
+
         snake_label = tk.Label(self.snake_ladder_frame, text="Snakes:", font=("Arial", 12))
         snake_label.grid(row=0, column=0, padx=10)
         self.snake_listbox = tk.Listbox(self.snake_ladder_frame, height=5, width=15, font=("Arial", 12))
@@ -170,14 +179,12 @@ class SnakeNLadder:
     def dice_animation(self, frame):
         if frame < 10:
             self.dice_roll = random.randint(1, 6)
-            self.dice_label.config(text=f"Dice: {self.dice_roll}")
             self.dice_image_label.config(image=self.dice_images[self.dice_roll - 1])
-            frame += 1
-            self.master.after(self.dice_animation_speed, self.dice_animation, frame)
+            self.master.after(100, self.dice_animation, frame + 1)
         else:
             self.roll_in_progress = False
-            self.move_player(self.dice_roll)
             self.roll_button.config(state=tk.NORMAL)
+            self.move_player(self.dice_roll)
 
     def move_player(self, steps):
         current_player = self.current_player
@@ -200,24 +207,49 @@ class SnakeNLadder:
 
     def update_player_position(self, player):
         pos = self.positions[player]
-        col = (pos-1) % 10 if (pos-1) // 10 % 2 == 0 else 9 - (pos-1) % 10
-        row = 9 - (pos-1) // 10
+        col = (pos - 1) % 10 if (pos - 1) // 10 % 2 == 0 else 9 - (pos - 1) % 10
+        row = 9 - (pos - 1) // 10
         x = col * 60 + 30
         y = row * 60 + 30
-        self.canvas.coords(self.players[player], x-10, y-10, x+10, y+10)
+        self.canvas.coords(self.players[player], x - 10, y - 10, x + 10, y + 10)
 
     def update_player_indicator(self, player, position):
         self.player_indicators[player].config(text=f"{self.players_names[player]}: {position}")
 
+    def save_game(self):
+        game_state = {
+            "positions": self.positions,
+            "current_player": self.current_player,
+            "snakes": self.snakes,
+            "ladders": self.ladders,
+            "players_names": self.players_names
+        }
+        with open("saved_game.pkl", "wb") as f:
+            pickle.dump(game_state, f)
+        messagebox.showinfo("Save Game", "Game has been saved successfully!")
+
+    def load_game(self):
+        if os.path.exists("saved_game.pkl"):
+            with open("saved_game.pkl", "rb") as f:
+                game_state = pickle.load(f)
+            self.positions = game_state["positions"]
+            self.current_player = game_state["current_player"]
+            self.snakes = game_state["snakes"]
+            self.ladders = game_state["ladders"]
+            self.players_names = game_state["players_names"]
+            self.reset_button.config(state=tk.NORMAL)
+            self.draw_board()
+            for player in range(4):
+                self.update_player_position(player)
+            self.turn_label.config(text=f"{self.players_names[self.current_player]}'s turn")
+            for player, pos in enumerate(self.positions):
+                self.update_player_indicator(player, pos)
+            messagebox.showinfo("Load Game", "Game has been loaded successfully!")
+        else:
+            messagebox.showerror("Load Game", "No saved game found.")
+
+
 if __name__ == "__main__":
     root = tk.Tk()
-    player_names = []
-    for i in range(4):
-        name = simpledialog.askstring(f"Player {i + 1} Name", f"Enter Player {i + 1}'s Name:")
-        if name:
-            player_names.append(name)
-        else:
-            player_names.append(f"Player {i + 1}")
     app = SnakeNLadder(root)
-    app.players_names = player_names
     root.mainloop()
