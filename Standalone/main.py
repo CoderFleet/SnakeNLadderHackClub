@@ -1,6 +1,7 @@
 import random
 import tkinter as tk
 
+
 class SnakeNLadder:
     def __init__(self, master):
         self.master = master
@@ -14,7 +15,11 @@ class SnakeNLadder:
         self.snakes = {16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 98: 78}
         self.ladders = {1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 100}
         self.create_dice()
-    
+        self.dice_animation_speed = 100
+        self.roll_in_progress = False
+        self.dice_roll = 0  # Initialize dice_roll attribute
+        self.create_reset_button()
+
     def draw_board(self):
         size = 60
         colors = ['white', 'lightblue']
@@ -26,10 +31,10 @@ class SnakeNLadder:
                 y2 = y1 + size
                 color = colors[(row + col) % 2]
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color)
-        
+
         for i in range(1, 101):
-            col = (i-1) % 10 if (i-1) // 10 % 2 == 0 else 9 - (i-1) % 10
-            row = 9 - (i-1) // 10
+            col = (i - 1) % 10 if (i - 1) // 10 % 2 == 0 else 9 - (i - 1) % 10
+            row = 9 - (i - 1) // 10
             x = col * size + size // 2
             y = row * size + size // 2
             self.canvas.create_text(x, y, text=str(i))
@@ -46,14 +51,39 @@ class SnakeNLadder:
         self.dice_label.pack(pady=20)
         self.roll_button = tk.Button(self.master, text="Roll", command=self.roll_dice)
         self.roll_button.pack(pady=10)
-        self.turn_label = tk.Label(self.master, text=f"{self.players_names[self.current_player]}'s turn", font=("Arial", 16))
+        self.turn_label = tk.Label(self.master, text=f"{self.players_names[self.current_player]}'s turn",
+                                   font=("Arial", 16))
         self.turn_label.pack(pady=10)
 
+    def create_reset_button(self):
+        self.reset_button = tk.Button(self.master, text="Reset", command=self.reset_game)
+        self.reset_button.pack(pady=10)
+
+    def reset_game(self):
+        self.positions = [1, 1]
+        self.current_player = 0
+        self.update_player_position(0)
+        self.update_player_position(1)
+        self.turn_label.config(text=f"{self.players_names[self.current_player]}'s turn")
+        self.roll_button.config(state=tk.NORMAL)
+
     def roll_dice(self):
-        dice_roll = random.randint(1, 6)
-        self.dice_label.config(text=f"Dice: {dice_roll}")
-        self.move_player(dice_roll)
-    
+        if not self.roll_in_progress:
+            self.roll_in_progress = True
+            self.roll_button.config(state=tk.DISABLED)
+            self.dice_animation(0)
+
+    def dice_animation(self, frame):
+        if frame < 10:
+            self.dice_roll = random.randint(1, 6)
+            self.dice_label.config(text=f"Dice: {self.dice_roll}")
+            frame += 1
+            self.master.after(self.dice_animation_speed, self.dice_animation, frame)
+        else:
+            self.roll_in_progress = False
+            self.move_player(self.dice_roll)
+            self.roll_button.config(state=tk.NORMAL)
+
     def move_player(self, steps):
         current_player = self.current_player
         new_position = self.positions[current_player] + steps
@@ -74,13 +104,22 @@ class SnakeNLadder:
 
     def update_player_position(self, player):
         pos = self.positions[player]
-        col = (pos-1) % 10 if (pos-1) // 10 % 2 == 0 else 9 - (pos-1) % 10
-        row = 9 - (pos-1) // 10
+        col = (pos - 1) % 10 if (pos - 1) // 10 % 2 == 0 else 9 - (pos - 1) % 10
+        row = 9 - (pos - 1) // 10
         x = col * 60 + 30
         y = row * 60 + 30
-        self.canvas.coords(self.players[player], x-10, y-10, x+10, y+10)
+        self.canvas.coords(self.players[player], x - 10, y - 10, x + 10, y + 10)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = SnakeNLadder(root)
+
+    player1_name = tk.simpledialog.askstring("Player 1 Name", "Enter Player 1's Name:")
+    player2_name = tk.simpledialog.askstring("Player 2 Name", "Enter Player 2's Name:")
+    if player1_name and player2_name:
+        app = SnakeNLadder(root)
+        app.players_names = [player1_name, player2_name]
+    else:
+        app = SnakeNLadder(root)
+
     root.mainloop()
