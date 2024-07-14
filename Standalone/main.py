@@ -2,18 +2,19 @@ import random
 import tkinter as tk
 from tkinter import simpledialog, messagebox
 
+
 class SnakeNLadder:
     def __init__(self, master):
         self.master = master
         self.master.title("Snake and Ladder")
         self.canvas = tk.Canvas(self.master, width=600, height=600)
         self.canvas.pack()
-        self.draw_board()
-        self.create_players()
         self.players_names = ["Player 1", "Player 2"]
         self.current_player = 0
         self.snakes = {16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 98: 78}
         self.ladders = {1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 100}
+        self.draw_board()
+        self.create_players()
         self.create_dice()
         self.dice_animation_speed = 100
         self.roll_in_progress = False
@@ -21,6 +22,7 @@ class SnakeNLadder:
         self.create_reset_button()
         self.create_player_indicators()
         self.create_snake_ladder_display()
+        self.create_dice_images()
 
     def draw_board(self):
         size = 60
@@ -33,13 +35,39 @@ class SnakeNLadder:
                 y2 = y1 + size
                 color = colors[(row + col) % 2]
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=color)
-        
+
         for i in range(1, 101):
-            col = (i-1) % 10 if (i-1) // 10 % 2 == 0 else 9 - (i-1) % 10
-            row = 9 - (i-1) // 10
+            col = (i - 1) % 10 if (i - 1) // 10 % 2 == 0 else 9 - (i - 1) % 10
+            row = 9 - (i - 1) // 10
             x = col * size + size // 2
             y = row * size + size // 2
             self.canvas.create_text(x, y, text=str(i))
+
+        # Draw snakes and ladders on the board
+        for start, end in self.snakes.items():
+            self.draw_snake(start, end)
+        for start, end in self.ladders.items():
+            self.draw_ladder(start, end)
+
+    def draw_snake(self, start, end):
+        self.draw_arrow(start, end, 'red')
+
+    def draw_ladder(self, start, end):
+        self.draw_arrow(start, end, 'green')
+
+    def draw_arrow(self, start, end, color):
+        size = 60
+        start_col = (start - 1) % 10 if (start - 1) // 10 % 2 == 0 else 9 - (start - 1) % 10
+        start_row = 9 - (start - 1) // 10
+        end_col = (end - 1) % 10 if (end - 1) // 10 % 2 == 0 else 9 - (end - 1) % 10
+        end_row = 9 - (end - 1) // 10
+
+        start_x = start_col * size + size // 2
+        start_y = start_row * size + size // 2
+        end_x = end_col * size + size // 2
+        end_y = end_row * size + size // 2
+
+        self.canvas.create_line(start_x, start_y, end_x, end_y, arrow=tk.LAST, fill=color, width=3)
 
     def create_players(self):
         self.players = [
@@ -53,7 +81,8 @@ class SnakeNLadder:
         self.dice_label.pack(pady=20)
         self.roll_button = tk.Button(self.master, text="Roll", command=self.roll_dice)
         self.roll_button.pack(pady=10)
-        self.turn_label = tk.Label(self.master, text=f"{self.players_names[self.current_player]}'s turn", font=("Arial", 16))
+        self.turn_label = tk.Label(self.master, text=f"{self.players_names[self.current_player]}'s turn",
+                                   font=("Arial", 16))
         self.turn_label.pack(pady=10)
 
     def create_reset_button(self):
@@ -71,7 +100,7 @@ class SnakeNLadder:
     def create_snake_ladder_display(self):
         self.snake_ladder_frame = tk.Frame(self.master)
         self.snake_ladder_frame.pack(pady=20)
-        
+
         snake_label = tk.Label(self.snake_ladder_frame, text="Snakes:", font=("Arial", 12))
         snake_label.grid(row=0, column=0, padx=10)
         self.snake_listbox = tk.Listbox(self.snake_ladder_frame, height=5, width=15, font=("Arial", 12))
@@ -85,6 +114,18 @@ class SnakeNLadder:
         self.ladder_listbox.grid(row=1, column=1, padx=10)
         for key in self.ladders:
             self.ladder_listbox.insert(tk.END, f"{key} -> {self.ladders[key]}")
+
+    def create_dice_images(self):
+        self.dice_images = [
+            tk.PhotoImage(file="dice1.png").subsample(2),
+            tk.PhotoImage(file="dice2.png").subsample(2),
+            tk.PhotoImage(file="dice3.png").subsample(2),
+            tk.PhotoImage(file="dice4.png").subsample(2),
+            tk.PhotoImage(file="dice5.png").subsample(2),
+            tk.PhotoImage(file="dice6.png").subsample(2)
+        ]
+        self.dice_image_label = tk.Label(self.master, image=self.dice_images[0])
+        self.dice_image_label.pack(pady=10)
 
     def reset_game(self):
         self.positions = [1, 1]
@@ -106,6 +147,7 @@ class SnakeNLadder:
         if frame < 10:
             self.dice_roll = random.randint(1, 6)
             self.dice_label.config(text=f"Dice: {self.dice_roll}")
+            self.dice_image_label.config(image=self.dice_images[self.dice_roll - 1])
             frame += 1
             self.master.after(self.dice_animation_speed, self.dice_animation, frame)
         else:
@@ -135,14 +177,15 @@ class SnakeNLadder:
 
     def update_player_position(self, player):
         pos = self.positions[player]
-        col = (pos-1) % 10 if (pos-1) // 10 % 2 == 0 else 9 - (pos-1) % 10
-        row = 9 - (pos-1) // 10
+        col = (pos - 1) % 10 if (pos - 1) // 10 % 2 == 0 else 9 - (pos - 1) % 10
+        row = 9 - (pos - 1) // 10
         x = col * 60 + 30
         y = row * 60 + 30
-        self.canvas.coords(self.players[player], x-10, y-10, x+10, y+10)
+        self.canvas.coords(self.players[player], x - 10, y - 10, x + 10, y + 10)
 
     def update_player_indicator(self, player, position):
         self.player_indicators[player].config(text=f"{self.players_names[player]}: {position}")
+
 
 if __name__ == "__main__":
     root = tk.Tk()
